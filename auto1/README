@@ -1,0 +1,75 @@
+COMP 412, Fall 2023
+
+The tar file in this directory contains a copy of the Lab 1 autograder and the 
+Lab 1 Autotimer. The autograder includes a subset of the test files that will
+be used to grade your actual submission. (You should test on as wide a range
+of files as you can.)  The autotimer uses the full set of files that will be
+used to time your actual submission.
+
+To use this distribution, create a new directory and unpack the tar 
+file into the directory.  (That is, copy the L1AG.tar into the directory 
+and run the command:
+
+   tar xvf L1AG.tar
+
+This command should install a subtree that includes, among other files,
+
+   auto_grade 
+   auto_time
+   Grader
+   Timer
+   TarFileGoesHere
+
+Next, you need to configure both the autograder and the autotimer so
+that they know where they are in the file system.
+
+1.   Edit the file auto_grade/auto_grade.py.
+
+     You will need to change "base_name" so that it points to the 
+     directory that contains the file "Grader". Note that "base_name" 
+     must end with a slash.
+
+     You may need to change the "normal_deadline" date.
+
+2.   Edit the file auto_time/auto_time.py and change the definition of 
+     "base_name" so that it points to the directory that contains the 
+     "Grader" file.  Note that "base_name" must end with a slash.
+
+The directory DefaultTarFiles includes tar files for testing: comp412.tar
+and noway.tar. comp412.tar is a working submission.  noway.tar is a
+nonworking submission. You can use these to verify that your
+autograder / autotimer installation works. To test the installation,
+move one or both of these files into TarFileGoesHere/ and run the command:
+
+   ./Grader
+
+That should create a log file in the current directory. The log file's
+name will start with "Grader-" and end with ".log". In the log file, 
+you should see that noway failed to work and comp412 worked correctly
+(no unexpected errors on the correct blocks and scores of 0 on the
+erroneous inputs).
+
+Now, delete the log file. If you want to delete the two test tar 
+files, remove them from the directory "TarFileGoesHere". Copy your 
+tar file into "TarFileGoesHere" and run the autograder again. The
+log file should give you a reasonable picture of what happened.  
+(Be certain that you are looking at the most recent log file. I 
+always delete the log file before running the autograder.)
+
+To run the timer, use the command:
+
+   ./Timer
+
+It may take a while. It uses eight input files and runs the submission
+on each file five times. It keeps the minimum time for each file (to 
+lessen the effects of interference from other programs running on the
+system.)
+
+The autotimer creates a log file that begins with "Timer-". It contains
+details on the autotimer's run. Note that the autotimer will kill any
+run that exceeds sixty seconds. No submission should need that much time.
+
+The files in the results directory are suitable for importing into Excel
+as tab-separated text files.
+
+-- keith

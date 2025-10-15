@@ -1,0 +1,94 @@
+Auto-grader Configuration:
+  blocks found in :	 auto_grade/blocks/
+  normal deadline is:	 2025-09-15
+ 
+=======================================================================
+Testing submission: comp412.tar
+Name: Comp 412, NetId: comp412	Date From Files: 2024-01-24
+
+--- building executable ---
+rm -f 412fe 
+cp placeholder 412fe
+chmod 711 412fe
+--- built executable; should be ready to run ---
+
+Testing Correctness
+
+	Holmes.i	0 correct lines identified as errors
+			9 errors found, 9 expected
+ 
+	T8k.i		0 correct lines identified as errors
+			0 errors found, 0 expected
+ 
+	parse.i		0 correct lines identified as errors
+			5 errors found, 5 expected
+ 
+	report1.i	0 correct lines identified as errors
+			0 errors found, 0 expected
+ 
+	report2.i	0 correct lines identified as errors
+			0 errors found, 0 expected
+ 
+	report3.i	0 correct lines identified as errors
+			0 errors found, 0 expected
+ 
+	scanner.i	0 correct lines identified as errors
+			2 errors found, 2 expected
+ 
+	-------------------------
+	0 correct lines identified as errors
+	0 lines with errors missed
+
+Testing Conformance	(If we got this far, the tar file worked.)
+
+	Produced 'ERROR' message on missing or bad file name
+	Help message check found all options
+
+Scoring (on the provided test blocks):
+
+	Correctness:	100.0%
+	Conformance:	100.0%
+
+finished testing submission comp412.tar
+=======================================================================
+Testing submission: kzz1.tar
+Name: Kyle Zeng, NetId: kzz1	Date From Files: 2025-09-14
+
+--- building executable ---
+--- built executable; should be ready to run ---
+
+Testing Correctness
+
+	Holmes.i	Submission timed out.
+			No credit for this test.
+ 
+	T8k.i		Submission timed out.
+			No credit for this test.
+ 
+	parse.i		Submission timed out.
+			No credit for this test.
+ 
+	report1.i	Submission timed out.
+			No credit for this test.
+ 
+	report2.i	Submission timed out.
+			No credit for this test.
+ 
+	report3.i	Submission timed out.
+			No credit for this test.
+ 
+	scanner.i	Submission timed out.
+			No credit for this test.
+ 
+	-------------------------
+	0 correct lines identified as errors
+	0 lines with errors missed
+
+Traceback (most recent call last):
+  File "/storage-home/k/kzz1/comp412/auto1/TarFileGoesHere/../auto_grade/auto_grade.py", line 274, in <module>
+    main()
+  File "/storage-home/k/kzz1/comp412/auto1/TarFileGoesHere/../auto_grade/auto_grade.py", line 246, in main
+    dummy = run_test(submission,path)
+  File "/storage-home/k/kzz1/comp412/auto1/TarFileGoesHere/../auto_grade/auto_grade.py", line 114, in run_test
+    correct = possible - possible * (sum_extras + sum_misses) / sum_expected
+ZeroDivisionError: float division by zero

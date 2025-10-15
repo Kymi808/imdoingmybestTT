@@ -1,0 +1,76 @@
+Lab 1 Autotimer: using Scalability SLOCs blocks
+
+Gathering operation counts with lab1_ref.
+
+=======================================================================
+Testing submission: comp412.tar
+Name: Comp 412, NetID: comp412	Date From Files: 2024-01-24
+
+--- building executable ---
+rm -f 412fe 
+cp placeholder 412fe
+chmod 711 412fe
+--- built executable; should be ready to run ---
+
+Testing Scalability:	(minimum time of 5 runs)
+
+	T1k.i:  	0.0070 seconds
+	T2k.i:  	0.0078 seconds
+	T4k.i:  	0.0087 seconds
+	T8k.i:  	0.0118 seconds
+	T16k.i:  	0.0166 seconds
+	T32k.i:  	0.0264 seconds
+	T64k.i:  	0.0350 seconds
+	T128k.i:  	0.0890 seconds
+ 
+Scaling score is 	15.0
+Efficiency score is 	15.0	( unknown )
+
+	Anomalous behavior: 1 inputs showed no growth
+
+finished timing run on submission comp412.tar
+=======================================================================
+Testing submission: kzz1.tar
+Name: Kyle Zeng, NetID: kzz1	Date From Files: 2025-09-14
+
+--- building executable ---
+--- built executable; should be ready to run ---
+
+Testing Scalability:	(minimum time of 5 runs)
+
+	T1k.i:  	0.0641 seconds
+	T2k.i:  	0.0775 seconds
+	T4k.i:  	0.1640 seconds
+	T8k.i:  	0.3497 seconds
+	T16k.i:  	0.3549 seconds
+	T32k.i:  	0.6197 seconds
+	T64k.i:  	1.6645 seconds
+	T128k.i:  	2.7921 seconds
+ 
+Scaling score is 	15.0
+Efficiency score is 	13.25	( python )
+
+	Anomalous behavior: 1 inputs showed no growth
+
+finished timing run on submission kzz1.tar
+=======================================================================
+Testing submission: noway.tar
+
+***	Problem reading files, submission date is inaccurate.
+
+
+***	No README file found, -50% on conformance
+
+Name: noway.tar, NetID: noway.tar	Date From Files: 2020-01-01
+
+--- built executable; should be ready to run ---
+
+noway.tar didn't folllow the instructions: no 412fe
+submission failed to build correctly
+likely a problem with tar file, make file, or script
+
+finished timing run on submission noway.tar
+=======================================================================
+
+Timing run complete.
+

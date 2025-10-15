@@ -1,0 +1,56 @@
+//NAME: Kyle Zeng
+//NETID: kzz1
+
+Comp 412 Lab1: ILOC Frontend Lab
+
+Description:
+This is a scanner and parser front end for the ILOC intermediate representation language. The front end reads ILOC source files, performs lexical analysis and syntax analysis, and builds an intermediate representation suitable for use in subsequent compiler phases.
+
+Building:
+This project is written in Python 3 and does not require compilation. The Makefile creates an executable shell script that wraps the Python program:
+
+Running:
+The front end supports four command-line modes:
+bash./412fe -h           
+./412fe -s <file>   
+./412fe -p <file>   
+./412fe -r <file> 
+./412fe <file> 
+
+Implementation:
+Scanner (scanner.py)
+Character-by-character lexical analysis
+
+Parser (parser.py)
+Reports all errors found in input
+Handles all ILOC operations: load, loadI, store, add, sub, mult, lshift, rshift, output, nop
+
+IR (ir.py)
+
+Doubly-linked list of operation records
+Each record stores opcode and up to 3 operands
+
+Frontend Controller (frontend.py)
+
+Coordinates scanner and parser
+Implements different output modes
+
+Main Entry Point (main.py)
+Command-line argument parsing
+File validation
+Mode selection with priority: -h > -r > -p > -s
+
+Error Handling
+Continues parsing after errors to find multiple issues
+ERROR messages include line numbers
+
+Files Included
+
+main.py
+frontend.py
+scanner.py
+parser.py
+ir.py
+Makefile
+README
+412fe Executable script (created by make)

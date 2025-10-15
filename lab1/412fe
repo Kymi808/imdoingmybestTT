@@ -1,0 +1,2 @@
+#!/bin/bash
+exec python3 "/storage-home/k/kzz1/comp412/lab1/main.py" "$@"
