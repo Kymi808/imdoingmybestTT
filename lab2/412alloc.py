@@ -119,11 +119,69 @@ def rename_registers(ir_list):
     return max_vr + 1
 
 
+def compute_maxlive(ir_list):
+    """Compute MAXLIVE for the block"""
+    live_vrs = set()
+    max_live = 0
+    
+    for op in ir_list.iterate_backward():
+        # Handle definitions - kill live range
+        if op.opcode in ["loadI", "load", "add", "sub", "mult", "lshift", "rshift"]:
+            if op.vr3 >= 0:
+                live_vrs.discard(op.vr3)
+        
+        # Handle uses - extend live range
+        if op.opcode in ["load", "store"]:
+            if op.vr1 >= 0:
+                live_vrs.add(op.vr1)
+            if op.opcode == "store" and op.vr3 >= 0:
+                live_vrs.add(op.vr3)
+        elif op.opcode in ["add", "sub", "mult", "lshift", "rshift"]:
+            if op.vr1 >= 0:
+                live_vrs.add(op.vr1)
+            if op.vr2 >= 0:
+                live_vrs.add(op.vr2)
+        
+        max_live = max(max_live, len(live_vrs))
+    
+    return max_live
+
+
+def get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op):
+    """Get a physical register using furthest next use heuristic"""
+    # First, look for a free register not used in current op
+    for pr in range(num_regs):
+        if pr_to_vr[pr] is None and pr not in used_in_op:
+            return pr
+    
+    # No free register, find the one with furthest next use (not used in current op)
+    best_pr = -1
+    best_nu = -1
+    
+    for pr in range(num_regs):
+        if pr not in used_in_op:
+            vr = pr_to_vr[pr]
+            if vr is not None:
+                nu = vr_nu.get(vr, float('inf'))
+                if nu > best_nu:
+                    best_pr = pr
+                    best_nu = nu
+    
+    return best_pr if best_pr != -1 else 0
+
+
 def allocate(ir_list, k):
     """Perform register allocation with k registers"""
-    # Reserve last register for spilling
-    spill_reg = k - 1
-    num_regs = k - 1
+    # Compute MAXLIVE
+    maxlive = compute_maxlive(ir_list)
+    
+    # Determine if we need to reserve a register for spilling
+    if maxlive > k:
+        spill_reg = k - 1
+        num_regs = k - 1
+    else:
+        spill_reg = -1
+        num_regs = k
     
     pr_to_vr = [None] * num_regs
     vr_to_pr = {}
@@ -134,13 +192,42 @@ def allocate(ir_list, k):
     next_spill = 32768
     
     for op in ir_list.iterate_forward():
-        # Handle loadI specially - mark for rematerialization
+        used_in_op = set()  # Track PRs used in current operation
+        
+        # Handle loadI specially
         if op.opcode == "loadI":
             vr3 = op.vr3 if op.vr3 >= 0 else None
             if vr3 is not None:
                 vr_loadI[vr3] = op.sr1  # Store the constant value
                 vr_nu[vr3] = op.nu3
-            continue  # Don't allocate a register yet
+                
+                # Allocate a register for the definition
+                pr = get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op)
+                
+                # Spill if needed
+                if pr_to_vr[pr] is not None:
+                    old_vr = pr_to_vr[pr]
+                    if old_vr not in vr_loadI and old_vr not in vr_spilled:
+                        vr_spilled[old_vr] = next_spill
+                        next_spill += 4
+                        print(f"loadI {vr_spilled[old_vr]} => r{spill_reg}")
+                        print(f"store r{pr} => r{spill_reg}")
+                    if old_vr in vr_to_pr:
+                        del vr_to_pr[old_vr]
+                    pr_to_vr[pr] = None
+                
+                vr_to_pr[vr3] = pr
+                pr_to_vr[pr] = vr3
+                op.pr3 = pr
+                
+                # Print the loadI operation
+                print(f"loadI {op.sr1} => r{pr}")
+                
+                # Free if dead immediately
+                if op.nu3 == float('inf'):
+                    del vr_to_pr[vr3]
+                    pr_to_vr[pr] = None
+            continue
         
         # Get virtual registers
         vr1 = op.vr1 if op.vr1 >= 0 else None
@@ -157,26 +244,24 @@ def allocate(ir_list, k):
         # Process first operand (vr1)
         if vr1 is not None:
             if vr1 not in vr_to_pr:
-                pr = get_pr(pr_to_vr, vr_nu, num_regs)
+                pr = get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op)
                 
                 # Spill if needed
                 if pr_to_vr[pr] is not None:
                     old_vr = pr_to_vr[pr]
-                    # Don't spill if it's a loadI value (can rematerialize)
                     if old_vr not in vr_loadI and old_vr not in vr_spilled:
                         vr_spilled[old_vr] = next_spill
                         next_spill += 4
                         print(f"loadI {vr_spilled[old_vr]} => r{spill_reg}")
                         print(f"store r{pr} => r{spill_reg}")
-                    del vr_to_pr[old_vr]
+                    if old_vr in vr_to_pr:
+                        del vr_to_pr[old_vr]
                     pr_to_vr[pr] = None
                 
                 # Restore or rematerialize
                 if vr1 in vr_loadI:
-                    # Rematerialize loadI
                     print(f"loadI {vr_loadI[vr1]} => r{pr}")
                 elif vr1 in vr_spilled:
-                    # Restore from memory
                     print(f"loadI {vr_spilled[vr1]} => r{spill_reg}")
                     print(f"load r{spill_reg} => r{pr}")
                 
@@ -185,11 +270,12 @@ def allocate(ir_list, k):
             
             op.pr1 = vr_to_pr[vr1]
             vr_nu[vr1] = op.nu1
+            used_in_op.add(op.pr1)
         
         # Process second operand (vr2)
         if vr2 is not None:
             if vr2 not in vr_to_pr:
-                pr = get_pr(pr_to_vr, vr_nu, num_regs)
+                pr = get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op)
                 
                 if pr_to_vr[pr] is not None:
                     old_vr = pr_to_vr[pr]
@@ -198,7 +284,8 @@ def allocate(ir_list, k):
                         next_spill += 4
                         print(f"loadI {vr_spilled[old_vr]} => r{spill_reg}")
                         print(f"store r{pr} => r{spill_reg}")
-                    del vr_to_pr[old_vr]
+                    if old_vr in vr_to_pr:
+                        del vr_to_pr[old_vr]
                     pr_to_vr[pr] = None
                 
                 if vr2 in vr_loadI:
@@ -212,11 +299,12 @@ def allocate(ir_list, k):
             
             op.pr2 = vr_to_pr[vr2]
             vr_nu[vr2] = op.nu2
+            used_in_op.add(op.pr2)
         
         # Process store's third operand as use
         if vr3_use is not None:
             if vr3_use not in vr_to_pr:
-                pr = get_pr(pr_to_vr, vr_nu, num_regs)
+                pr = get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op)
                 
                 if pr_to_vr[pr] is not None:
                     old_vr = pr_to_vr[pr]
@@ -225,7 +313,8 @@ def allocate(ir_list, k):
                         next_spill += 4
                         print(f"loadI {vr_spilled[old_vr]} => r{spill_reg}")
                         print(f"store r{pr} => r{spill_reg}")
-                    del vr_to_pr[old_vr]
+                    if old_vr in vr_to_pr:
+                        del vr_to_pr[old_vr]
                     pr_to_vr[pr] = None
                 
                 if vr3_use in vr_loadI:
@@ -239,6 +328,7 @@ def allocate(ir_list, k):
             
             op.pr3 = vr_to_pr[vr3_use]
             vr_nu[vr3_use] = op.nu3
+            used_in_op.add(op.pr3)
         
         # Free values that are dead after use
         if vr1 is not None and op.nu1 == float('inf'):
@@ -259,12 +349,9 @@ def allocate(ir_list, k):
                 del vr_to_pr[vr3_use]
                 pr_to_vr[pr] = None
         
-        # Handle definition
+        # Handle definition (not for loadI or store)
         if vr3 is not None:
-            if vr3 in vr_loadI:
-                del vr_loadI[vr3]
-            
-            pr = get_pr(pr_to_vr, vr_nu, num_regs)
+            pr = get_pr(pr_to_vr, vr_to_pr, vr_nu, num_regs, used_in_op)
             
             if pr_to_vr[pr] is not None:
                 old_vr = pr_to_vr[pr]
@@ -273,7 +360,8 @@ def allocate(ir_list, k):
                     next_spill += 4
                     print(f"loadI {vr_spilled[old_vr]} => r{spill_reg}")
                     print(f"store r{pr} => r{spill_reg}")
-                del vr_to_pr[old_vr]
+                if old_vr in vr_to_pr:
+                    del vr_to_pr[old_vr]
                 pr_to_vr[pr] = None
             
             vr_to_pr[vr3] = pr
@@ -299,26 +387,7 @@ def allocate(ir_list, k):
             print("nop")
 
 
-def get_pr(pr_to_vr, vr_nu, num_regs):
-    """Get a physical register using furthest next use heuristic"""
-    # First, look for a free register
-    for pr in range(num_regs):
-        if pr_to_vr[pr] is None:
-            return pr
-    
-    # No free register, find the one with furthest next use
-    best_pr = 0
-    best_nu = 0
-    
-    for pr in range(num_regs):
-        vr = pr_to_vr[pr]
-        if vr is not None:
-            nu = vr_nu.get(vr, float('inf'))
-            if nu > best_nu or (nu == best_nu and pr < best_pr):
-                best_pr = pr
-                best_nu = nu
-    
-    return best_pr
+
 
 def print_renamed(ir_list):
     """Print renamed ILOC"""
